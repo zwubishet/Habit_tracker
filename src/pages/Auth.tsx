@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Added useEffect
+import { useNavigate } from 'react-router-dom'; // Added useNavigate
 import { useAuth } from '../contexts/AuthContext';
 import { Target, Mail, Lock, User } from 'lucide-react';
 
@@ -9,7 +10,16 @@ export default function Auth() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  
+  const { signIn, signUp, user } = useAuth(); // Destructure user
+  const navigate = useNavigate();
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +30,7 @@ export default function Auth() {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) setError(error.message);
+        // Navigation is handled by the useEffect above
       } else {
         if (!name.trim()) {
           setError('Please enter your name');
@@ -27,7 +38,12 @@ export default function Auth() {
           return;
         }
         const { error } = await signUp(email, password, name);
-        if (error) setError(error.message);
+        if (error) {
+          setError(error.message);
+        } else {
+          // Optional: Show a "Check your email" toast here
+          setIsLogin(true); 
+        }
       }
     } catch (err) {
       setError('An unexpected error occurred');
